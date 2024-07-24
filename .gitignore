@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+/.vs/PasswordManager
+*.tlog
+*.log
+/PasswordManager/x64/Debug
+/x64/Debug/PasswordManager.pdb
