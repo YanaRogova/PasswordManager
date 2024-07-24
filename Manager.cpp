@@ -5,7 +5,10 @@
 #include <QMessageBox>
 
 Manager::Manager(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::Manager), m_saverLoader(QCoreApplication::applicationDirPath())
+    : QMainWindow(parent), 
+    ui(new Ui::Manager), 
+    m_saverLoader(QCoreApplication::applicationDirPath()),
+    m_bChanges(false)
 {
     // Create central widget with main layout
     QWidget *centralWidget = new QWidget(this);
@@ -26,6 +29,7 @@ Manager::Manager(QWidget *parent)
     connect(ui->pbAddApp, SIGNAL(clicked()), this, SLOT(OnAddApp()));
     connect(ui->tblAccounts, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(OnChangeTableItemVisible(QTableWidgetItem*)));
     connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
+    connect(ui->pbDeleteApp, SIGNAL(clicked()), this, SLOT(OnDeleteApp()));
 }
 
 Manager::~Manager()
@@ -66,6 +70,7 @@ void Manager::DisableAccountAdding(bool bDisable)
     ui->leUser->setDisabled(bDisable);
     ui->lePassword->setDisabled(bDisable);
     ui->pbPasswordVisible->setDisabled(bDisable);
+    ui->pbDeleteApp->setDisabled(bDisable);
 }
 
 void Manager::LoadAccounts()
@@ -83,11 +88,8 @@ void Manager::AddComboBoxItems(const QStringList& fileNames)
         if (ui->cbApp->findData(filePath) != -1)
         {
             ui->cbApp->setCurrentIndex(ui->cbApp->findData(filePath));
-            QMessageBox msb(this);
-            msb.setWindowTitle("The application has already been added");
-            msb.setText("The selected application has already been added. You can add a new account for this application.");
-            msb.setIcon(QMessageBox::Information);
-            msb.exec();
+            QMessageBox::information(this, "The application has already been added",
+                "The selected application has already been added. You can add a new account for this application.");
             continue;
         }
 
@@ -117,6 +119,8 @@ void Manager::AddAppFromDevice()
 
     for (auto filePath : fileNames)
         m_managerData.insert(filePath, QMap<QString, QString>());
+
+    m_bChanges = true;
 }
 
 void Manager::AddOtherApp()
@@ -159,23 +163,49 @@ void Manager::UpdateAccountsTable(QString sAppData)
 
 void Manager::closeEvent(QCloseEvent* event)
 {
-    bool bSaved = m_saverLoader.SaveAccounts(m_managerData);
-
-    if (!bSaved)
+    if (!m_bChanges)
     {
-        QMessageBox msb(QMessageBox::Question, 
-            "Failed to save changes", 
-            "Failed to save changes. Close the app anyway?", 
-            QMessageBox::Yes | QMessageBox::No);
-
-        if (msb.exec() != QMessageBox::Yes)
-        {
-            event->ignore();
-            return;
-        }
+        event->accept(); 
+        return;
     }
-    
-    event->accept();
+
+    QMessageBox msbSave(QMessageBox::Question,
+        "Save changes",
+        "Do you want to save changes?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    int res = msbSave.exec();
+    if (res == QMessageBox::No)
+    {
+        event->accept();
+        return;
+    }
+    else if (res == QMessageBox::Yes)
+    {
+        bool bSaved = m_saverLoader.SaveAccounts(m_managerData);
+
+        if (!bSaved)
+        {
+            QMessageBox msb(QMessageBox::Question,
+                "Failed to save changes",
+                "Failed to save changes. Close the app anyway?",
+                QMessageBox::Yes | QMessageBox::No);
+
+            if (msb.exec() != QMessageBox::Yes)
+            {
+                event->ignore();
+                return;
+            }
+        }
+
+        event->accept();
+        return;
+    }
+    else
+    {
+        event->ignore();
+        return;
+    }
 }
 
 void Manager::OnChangeCurrentApp()
@@ -222,6 +252,7 @@ void Manager::OnAddAccaunt()
 
     ui->leUser->clear();
     ui->lePassword->clear();
+    m_bChanges = true;
 }
 
 void Manager::OnAddApp()
@@ -236,6 +267,30 @@ void Manager::OnAddApp()
     }
 
     DisableAccountAdding(ui->cbApp->currentIndex() == -1);
+}
+
+void Manager::OnDeleteApp()
+{
+    int indCurrentApp = ui->cbApp->currentIndex();
+    if (indCurrentApp != -1)
+    {
+        QMessageBox msb(QMessageBox::Question,
+            "Remove application",
+            "Are you sure you want to remove th application from the list and all accounts added to it?",
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (msb.exec() != QMessageBox::Yes)
+        {
+            return;
+        }
+
+        QString sApp = ui->cbApp->itemData(ui->cbApp->currentIndex(), Qt::UserRole).toString();
+        m_managerData.remove(sApp);
+        ui->cbApp->removeItem(indCurrentApp);
+        ui->cbApp->setCurrentIndex(-1);
+        UpdateAccountsTable();
+        m_bChanges = true;
+    }
 }
 
 void Manager::OnChangeTableItemVisible(QTableWidgetItem* ptwi)

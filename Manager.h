@@ -29,6 +29,7 @@ public slots:
     void OnChangeCurrentApp();
     void OnAddAccaunt();
     void OnAddApp();
+    void OnDeleteApp();
     void OnChangeTableItemVisible(QTableWidgetItem* ptwi);
     void OnChangePasswordVisible();
 
@@ -42,7 +43,7 @@ protected:
     void AddOtherApp();
     void ChangeCurrentApp();
 
-    void UpdateAccountsTable(QString sAppData);
+    void UpdateAccountsTable(QString sAppData = QString());
     void closeEvent(QCloseEvent* event);
 
 private:
@@ -52,6 +53,7 @@ private:
     // < app path, < user, password > >
     QMap<QString, QMap<QString, QString>> m_managerData;
     AccountsSaverLoader m_saverLoader;
+    bool m_bChanges;
 };
 
 enum TableColumns

@@ -55,13 +55,20 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="5" colspan="2">
+   <item row="4" column="5" colspan="1">
     <widget class="QPushButton" name="pbAddApp">
      <property name="text">
       <string>Add application</string>
      </property>
     </widget>
    </item>
+	<item row="4" column="6" colspan="1">
+		<widget class="QPushButton" name="pbDeleteApp">
+			<property name="text">
+				<string>Delete application</string>
+			</property>
+		</widget>
+	</item>
    <item row="5" column="2" colspan="2">
     <widget class="QLineEdit" name="lePassword"/>
    </item>
