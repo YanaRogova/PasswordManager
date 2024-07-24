@@ -35,3 +35,4 @@
 *.log
 /PasswordManager/x64/Debug
 /x64/Debug/PasswordManager.pdb
+/x64/Debug

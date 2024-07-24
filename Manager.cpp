@@ -5,7 +5,7 @@
 #include <QMessageBox>
 
 Manager::Manager(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::Manager)
+    : QMainWindow(parent), ui(new Ui::Manager), m_saverLoader(QCoreApplication::applicationDirPath())
 {
     // Create central widget with main layout
     QWidget *centralWidget = new QWidget(this);
@@ -18,7 +18,7 @@ Manager::Manager(QWidget *parent)
    // m_leOtherAppName->hide();
 
     SetManagerUi();
-
+    LoadAccounts();
 
     // connect signals
     connect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
@@ -45,11 +45,6 @@ void Manager::SetManagerUi()
     ui->cbApp->setEnabled(true);
     ui->cbApp->setInsertPolicy(QComboBox::InsertPolicy::InsertAlphabetically);
 
-    // set widjets to add new record
-    //ui->pbAddAccount->setDisabled(true);
-    //ui->leUser->setDisabled(true);
-    //ui->lePassword->setDisabled(true);
-
     // set font
     ui->leUser->setPlaceholderText("Username");
     ui->lePassword->setPlaceholderText("Password");
@@ -62,22 +57,27 @@ void Manager::SetManagerUi()
 
     ui->rbDeviceApps->setChecked(true);
 
-    ui->pbAddAccount->setDisabled(true);
-    ui->leUser->setDisabled(true);
-    ui->lePassword->setDisabled(true);
-    ui->pbPasswordVisible->setDisabled(true);
+    DisableAccountAdding(true);
 }
 
-void Manager::AddAppFromDevice()
+void Manager::DisableAccountAdding(bool bDisable)
 {
-     QString sFilter("Executable files (*.exe)");
-    QFileDialog fdlg(this, "Select application executable file", "/C:/", sFilter);
-    fdlg.setFileMode(QFileDialog::ExistingFile);
+    ui->pbAddAccount->setDisabled(bDisable);
+    ui->leUser->setDisabled(bDisable);
+    ui->lePassword->setDisabled(bDisable);
+    ui->pbPasswordVisible->setDisabled(bDisable);
+}
 
-    QStringList fileNames;
-    if(fdlg.exec())
-        fileNames = fdlg.selectedFiles();
+void Manager::LoadAccounts()
+{
+    m_saverLoader.LoadAccounts(m_managerData);
+    AddComboBoxItems(m_managerData.keys());
+    ui->cbApp->setCurrentIndex(-1);
 
+}
+
+void Manager::AddComboBoxItems(const QStringList& fileNames)
+{
     for (auto filePath : fileNames)
     {
         if (ui->cbApp->findData(filePath) != -1)
@@ -99,9 +99,24 @@ void Manager::AddAppFromDevice()
         ui->cbApp->setCurrentIndex(ui->cbApp->count() - 1);
         //connect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
 
-        m_managerData.insert(filePath, QMap<QString, QString>());
         //TODO: get app name from path, add to cb
     }
+}
+
+void Manager::AddAppFromDevice()
+{
+     QString sFilter("Executable files (*.exe)");
+    QFileDialog fdlg(this, "Select application executable file", "/C:/", sFilter);
+    fdlg.setFileMode(QFileDialog::ExistingFile);
+
+    if(!fdlg.exec())
+        return;
+
+    QStringList fileNames = fdlg.selectedFiles();
+    AddComboBoxItems(fileNames);
+
+    for (auto filePath : fileNames)
+        m_managerData.insert(filePath, QMap<QString, QString>());
 }
 
 void Manager::AddOtherApp()
@@ -117,7 +132,7 @@ void Manager::ChangeCurrentApp()
 
 }
 
-void Manager::UpdateAccauntsTable(QString sAppData)
+void Manager::UpdateAccountsTable(QString sAppData)
 {
     ui->tblAccounts->clearContents();
     ui->tblAccounts->setRowCount(m_managerData.value(sAppData).keys().size());
@@ -142,15 +157,41 @@ void Manager::UpdateAccauntsTable(QString sAppData)
     }
 }
 
+void Manager::closeEvent(QCloseEvent* event)
+{
+    bool bSaved = m_saverLoader.SaveAccounts(m_managerData);
+
+    if (!bSaved)
+    {
+        QMessageBox msb(QMessageBox::Question, 
+            "Failed to save changes", 
+            "Failed to save changes. Close the app anyway?", 
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (msb.exec() != QMessageBox::Yes)
+        {
+            event->ignore();
+            return;
+        }
+    }
+    
+    event->accept();
+}
+
 void Manager::OnChangeCurrentApp()
 {
     if (ui->cbApp->currentIndex() == -1)
+    {
+        DisableAccountAdding(true);
         return;
+    }
+
+    DisableAccountAdding(false);
 
     QString sCurrentAppData = ui->cbApp->currentData().toString();
 
     ChangeCurrentApp();
-    UpdateAccauntsTable(sCurrentAppData);
+    UpdateAccountsTable(sCurrentAppData);
 }
 
 void Manager::OnAddAccaunt()
@@ -177,7 +218,7 @@ void Manager::OnAddAccaunt()
     }
 
     m_managerData[sAppData].insert(ui->leUser->text(), ui->lePassword->text());
-    UpdateAccauntsTable(sAppData);
+    UpdateAccountsTable(sAppData);
 
     ui->leUser->clear();
     ui->lePassword->clear();
@@ -194,12 +235,7 @@ void Manager::OnAddApp()
         AddOtherApp();
     }
 
-    bool bNoApps = ui->cbApp->count() == 0;
-
-    ui->pbAddAccount->setDisabled(bNoApps);
-    ui->leUser->setDisabled(bNoApps);
-    ui->lePassword->setDisabled(bNoApps);
-    ui->pbPasswordVisible->setDisabled(bNoApps);
+    DisableAccountAdding(ui->cbApp->currentIndex() == -1);
 }
 
 void Manager::OnChangeTableItemVisible(QTableWidgetItem* ptwi)

@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QTableWidgetItem>
+#include <QCloseEvent>
+#include "AccountsSaverLoader.h"
 
 class QComboBox;
 class QLineEdit;
@@ -32,11 +34,16 @@ public slots:
 
 protected:
     void SetManagerUi();
+    void DisableAccountAdding(bool bDisable);
+    void LoadAccounts();
+    void AddComboBoxItems(const QStringList& fileNames);
+
     void AddAppFromDevice();
     void AddOtherApp();
     void ChangeCurrentApp();
 
-    void UpdateAccauntsTable(QString sAppData);
+    void UpdateAccountsTable(QString sAppData);
+    void closeEvent(QCloseEvent* event);
 
 private:
     Ui::Manager *ui;
@@ -44,7 +51,7 @@ private:
 
     // < app path, < user, password > >
     QMap<QString, QMap<QString, QString>> m_managerData;
-
+    AccountsSaverLoader m_saverLoader;
 };
 
 enum TableColumns
