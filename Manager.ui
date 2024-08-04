@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>514</width>
+    <width>517</width>
     <height>369</height>
    </rect>
   </property>
@@ -20,10 +20,19 @@
    <string/>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="6" column="0" colspan="7">
+   <item row="3" column="0" colspan="6">
     <widget class="QTableWidget" name="tblAccounts">
      <property name="sizeAdjustPolicy">
       <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
      </property>
      <property name="sortingEnabled">
       <bool>true</bool>
@@ -41,11 +50,6 @@
        <string>Password</string>
       </property>
      </column>
-     <column>
-      <property name="text">
-       <string>Visible</string>
-      </property>
-     </column>
     </widget>
    </item>
    <item row="0" column="0" colspan="3">
@@ -55,41 +59,65 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="5" colspan="1">
+   <item row="1" column="4">
     <widget class="QPushButton" name="pbAddApp">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string>Add application</string>
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::ListAdd"/>
      </property>
     </widget>
    </item>
-	<item row="4" column="6" colspan="1">
-		<widget class="QPushButton" name="pbDeleteApp">
-			<property name="text">
-				<string>Delete application</string>
-			</property>
-		</widget>
-	</item>
-   <item row="5" column="2" colspan="2">
-    <widget class="QLineEdit" name="lePassword"/>
+   <item row="1" column="5">
+    <widget class="QPushButton" name="pbDeleteApp">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::ListRemove"/>
+     </property>
+    </widget>
    </item>
-   <item row="0" column="3" colspan="4">
+   <item row="0" column="3" colspan="3">
     <widget class="QRadioButton" name="rbOtherApps">
      <property name="text">
       <string>Other applications</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="5" colspan="2">
+   <item row="1" column="0" colspan="4">
+    <widget class="QComboBox" name="cbApp"/>
+   </item>
+   <item row="2" column="5">
     <widget class="QPushButton" name="pbAddAccount">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string>Add  account</string>
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::ListAdd"/>
      </property>
     </widget>
    </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QLineEdit" name="leUser"/>
-   </item>
-   <item row="5" column="4">
+   <item row="2" column="4">
     <widget class="QPushButton" name="pbPasswordVisible">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
@@ -98,12 +126,15 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Hidden</string>
+      <string/>
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="5">
-    <widget class="QComboBox" name="cbApp"/>
+   <item row="2" column="2" colspan="2">
+    <widget class="QLineEdit" name="lePassword"/>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLineEdit" name="leUser"/>
    </item>
   </layout>
  </widget>

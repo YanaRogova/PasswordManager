@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/hide_dark.png</file>
+        <file>icons/hide_light.png</file>
+        <file>icons/show_dark.png</file>
+        <file>icons/show_light.png</file>
+        <file>icons/manager.png</file>
+    </qresource>
+</RCC>

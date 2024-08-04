@@ -27,7 +27,7 @@ Manager::Manager(QWidget *parent)
     connect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
     connect(ui->pbAddAccount, SIGNAL(clicked()), this, SLOT(OnAddAccaunt()));
     connect(ui->pbAddApp, SIGNAL(clicked()), this, SLOT(OnAddApp()));
-    connect(ui->tblAccounts, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(OnChangeTableItemVisible(QTableWidgetItem*)));
+    connect(ui->tblAccounts, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(OnChangeTableItemVisible(QTableWidgetItem*)));
     connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
     connect(ui->pbDeleteApp, SIGNAL(clicked()), this, SLOT(OnDeleteApp()));
 }
@@ -53,6 +53,7 @@ void Manager::SetManagerUi()
     ui->leUser->setPlaceholderText("Username");
     ui->lePassword->setPlaceholderText("Password");
     ui->lePassword->setEchoMode(QLineEdit::Password);
+    ui->pbPasswordVisible->setIcon(QIcon(":/icons/hide_light.png"));
     // QFont font = ui->leUser->font();
     // font.
     // ui->leUser->setText("User");
@@ -61,7 +62,12 @@ void Manager::SetManagerUi()
 
     ui->rbDeviceApps->setChecked(true);
 
+    ui->tblAccounts->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
     DisableAccountAdding(true);
+
+    this->setWindowIcon(QIcon(":/icons/manager.png"));
+
 }
 
 void Manager::DisableAccountAdding(bool bDisable)
@@ -144,6 +150,8 @@ void Manager::UpdateAccountsTable(QString sAppData)
     if(!m_managerData.contains(sAppData))
         return;
 
+    QIcon icon(":/icons/hide_light.png");
+
     int nRowCount = 0;
     for (auto sUser : m_managerData.value(sAppData).keys())
     {
@@ -153,12 +161,17 @@ void Manager::UpdateAccountsTable(QString sAppData)
         QTableWidgetItem *twiPassword = new QTableWidgetItem(QString::QString(m_managerData.value(sAppData).value(sUser).size(), '*'));
         twiPassword->setData(Qt::UserRole, m_managerData.value(sAppData).value(sUser));
         ui->tblAccounts->setItem(nRowCount, COL_PASSWORD, twiPassword);
-
-        QTableWidgetItem* twiVisible = new QTableWidgetItem("Hidden");
-        ui->tblAccounts->setItem(nRowCount, COL_VISIBLE, twiVisible);
+        twiPassword->setCheckState(Qt::Checked);
 
         nRowCount++;
+        
     }
+
+
+
+   /* ui->tblAccounts->horizontalHeader()->setSectionResizeMode(COL_VISIBLE, QHeaderView::);
+    ui->tblAccounts->horizontalHeader()->setSectionResizeMode(COL_USER, QHeaderView::Stretch);
+    ui->tblAccounts->horizontalHeader()->setSectionResizeMode(COL_PASSWORD, QHeaderView::Stretch);*/
 }
 
 void Manager::closeEvent(QCloseEvent* event)
@@ -295,39 +308,37 @@ void Manager::OnDeleteApp()
 
 void Manager::OnChangeTableItemVisible(QTableWidgetItem* ptwi)
 {
-    if (ptwi && ptwi->column() == COL_VISIBLE)
+    if (ptwi && ptwi->column() == COL_PASSWORD)
     {
-        QTableWidgetItem* ptwiPassword = ui->tblAccounts->item(ptwi->row(), COL_PASSWORD);
+        QString sPathIcon(":/icons/show_light.png");
+        QString sText("Visible");
 
-        if (ptwi->text() == "Hidden")
+        if (ptwi->checkState() == Qt::Checked)
         {
-            ptwi->setText("Visible");
-
-            if (ptwiPassword)
-                ptwiPassword->setText(ptwiPassword->data(Qt::UserRole).toString());
+            ptwi->setText(QString::QString(ptwi->text().size(), '*'));
         }
         else
         {
-            ptwi->setText("Hidden");
-            if (ptwiPassword)
-                ptwiPassword->setText(QString::QString(ptwiPassword->text().size(), '*'));
+            ptwi->setText(ptwi->data(Qt::UserRole).toString());
         }
-
     }
 }
 
 void Manager::OnChangePasswordVisible()
 {
-    if (ui->pbPasswordVisible->text() == "Hidden")
+    QString sPathIcon(":/icons/show_light.png");
+
+    if (ui->lePassword->echoMode() == QLineEdit::Password)
     {
-        ui->pbPasswordVisible->setText("Visible");
         ui->lePassword->setEchoMode(QLineEdit::Normal);
     }
     else
     {
-        ui->pbPasswordVisible->setText("Hidden");
+        sPathIcon = ":/icons/hide_light.png";
         ui->lePassword->setEchoMode(QLineEdit::Password);
     }
+
+    ui->pbPasswordVisible->setIcon(QIcon(sPathIcon));
 }
 
 
