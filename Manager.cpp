@@ -3,6 +3,7 @@
 #include <QPainter>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QClipboard>
 
 Manager::Manager(QWidget *parent)
     : QMainWindow(parent), 
@@ -21,6 +22,7 @@ Manager::Manager(QWidget *parent)
    // m_leOtherAppName->hide();
 
     SetManagerUi();
+    CreateCustomMenu();
     LoadAccounts();
 
     // connect signals
@@ -30,6 +32,7 @@ Manager::Manager(QWidget *parent)
     connect(ui->tblAccounts, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(OnChangeTableItemVisible(QTableWidgetItem*)));
     connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
     connect(ui->pbDeleteApp, SIGNAL(clicked()), this, SLOT(OnDeleteApp()));
+
 }
 
 Manager::~Manager()
@@ -63,11 +66,29 @@ void Manager::SetManagerUi()
     ui->rbDeviceApps->setChecked(true);
 
     ui->tblAccounts->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    connect(ui->tblAccounts, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(OnShowMenu(QPoint)));
 
     DisableAccountAdding(true);
 
     this->setWindowIcon(QIcon(":/icons/manager.png"));
 
+}
+
+void Manager::CreateCustomMenu()
+{
+    m_customMenu = new QMenu(this);
+
+    QAction* copyAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy", this);
+    QAction* editAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::MailMessageNew), "Edit", this);
+    QAction* deleteAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditDelete), "Delete", this);
+
+    connect(copyAccount, SIGNAL(triggered()), this, SLOT(OnCopyAccount()));
+    connect(editAccount, SIGNAL(triggered()), this, SLOT(OnEditAccount()));
+    connect(deleteAccount, SIGNAL(triggered()), this, SLOT(OnDeleteAccount()));
+
+    m_customMenu->addAction(copyAccount);
+    m_customMenu->addAction(editAccount);
+    m_customMenu->addAction(deleteAccount);
 }
 
 void Manager::DisableAccountAdding(bool bDisable)
@@ -162,6 +183,7 @@ void Manager::UpdateAccountsTable(QString sAppData)
         twiPassword->setData(Qt::UserRole, m_managerData.value(sAppData).value(sUser));
         ui->tblAccounts->setItem(nRowCount, COL_PASSWORD, twiPassword);
         twiPassword->setCheckState(Qt::Checked);
+        
 
         nRowCount++;
         
@@ -288,8 +310,8 @@ void Manager::OnDeleteApp()
     if (indCurrentApp != -1)
     {
         QMessageBox msb(QMessageBox::Question,
-            "Remove application",
-            "Are you sure you want to remove th application from the list and all accounts added to it?",
+            "Delete application",
+            "Are you sure you want to delete the application from the list and all accounts added to it?",
             QMessageBox::Yes | QMessageBox::No);
 
         if (msb.exec() != QMessageBox::Yes)
@@ -341,4 +363,54 @@ void Manager::OnChangePasswordVisible()
     ui->pbPasswordVisible->setIcon(QIcon(sPathIcon));
 }
 
+void Manager::OnShowMenu(QPoint pos)
+{
+    if (!ui->tblAccounts->itemAt(pos))
+        return;
+
+    m_customMenu->popup(ui->tblAccounts->viewport()->mapToGlobal(pos));
+}
+
+void Manager::OnEditAccount()
+{
+    if (!ui->tblAccounts->currentItem())
+        return;
+}
+
+void Manager::OnDeleteAccount()
+{
+    if (!ui->tblAccounts->currentItem())
+        return;
+
+    QMessageBox msb(QMessageBox::Question,
+        "Delete account",
+        "Are you sure you want to remove the current account?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (msb.exec() != QMessageBox::Yes)
+    {
+        return;
+    }
+
+    QString sUserName(ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_USER)->text());
+    QString sApp(ui->cbApp->currentData(Qt::UserRole).toString());
+
+    m_managerData[sApp].remove(sUserName);
+    ui->tblAccounts->removeRow(ui->tblAccounts->currentRow());
+    m_bChanges = true;
+}
+
+void Manager::OnCopyAccount()
+{
+    QTableWidgetItem* currItem = ui->tblAccounts->currentItem();
+    if (!currItem)
+        return;
+
+    QClipboard* clipboard = QApplication::clipboard();
+
+    if (currItem->column() == COL_USER)
+        clipboard->setText(currItem->text());
+    else if (currItem->column() == COL_PASSWORD)
+        clipboard->setText(currItem->data(Qt::UserRole).toString());
+}
 

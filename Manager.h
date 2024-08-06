@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QTableWidgetItem>
 #include <QCloseEvent>
+#include <QMenu>
 #include "AccountsSaverLoader.h"
 
 class QComboBox;
@@ -33,8 +34,14 @@ public slots:
     void OnChangeTableItemVisible(QTableWidgetItem* ptwi);
     void OnChangePasswordVisible();
 
+    void OnShowMenu(QPoint pos);
+    void OnEditAccount();
+    void OnDeleteAccount();
+    void OnCopyAccount();
+
 protected:
     void SetManagerUi();
+    void CreateCustomMenu();
     void DisableAccountAdding(bool bDisable);
     void LoadAccounts();
     void AddComboBoxItems(const QStringList& fileNames);
@@ -54,6 +61,8 @@ private:
     QMap<QString, QMap<QString, QString>> m_managerData;
     AccountsSaverLoader m_saverLoader;
     bool m_bChanges;
+
+    QMenu* m_customMenu;
 };
 
 enum TableColumns

@@ -22,6 +22,9 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="3" column="0" colspan="6">
     <widget class="QTableWidget" name="tblAccounts">
+     <property name="contextMenuPolicy">
+      <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+     </property>
      <property name="sizeAdjustPolicy">
       <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
      </property>
