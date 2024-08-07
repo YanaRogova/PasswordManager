@@ -26,7 +26,7 @@ public:
     Manager(QWidget *parent = nullptr);
     ~Manager();
 
-public slots:
+private slots:
     void OnChangeCurrentApp();
     void OnAddAccaunt();
     void OnAddApp();

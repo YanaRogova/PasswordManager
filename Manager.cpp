@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QClipboard>
+#include "EditDialog.h"
 
 Manager::Manager(QWidget *parent)
     : QMainWindow(parent), 
@@ -32,7 +33,6 @@ Manager::Manager(QWidget *parent)
     connect(ui->tblAccounts, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(OnChangeTableItemVisible(QTableWidgetItem*)));
     connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
     connect(ui->pbDeleteApp, SIGNAL(clicked()), this, SLOT(OnDeleteApp()));
-
 }
 
 Manager::~Manager()
@@ -333,9 +333,6 @@ void Manager::OnChangeTableItemVisible(QTableWidgetItem* ptwi)
 {
     if (ptwi && ptwi->column() == COL_PASSWORD)
     {
-        QString sPathIcon(":/icons/show_light.png");
-        QString sText("Visible");
-
         if (ptwi->checkState() == Qt::Checked)
         {
             ptwi->setText(QString::QString(ptwi->text().size(), '*'));
@@ -376,6 +373,34 @@ void Manager::OnEditAccount()
 {
     if (!ui->tblAccounts->currentItem())
         return;
+
+    EditDialog dlg(ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_USER)->text(),
+        ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_PASSWORD)->data(Qt::UserRole).toString(), this);
+
+    if (dlg.exec() == QDialog::Accepted)
+    {
+        QTableWidgetItem* currUsername = ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_USER);
+        QTableWidgetItem* currPassword = ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_PASSWORD);
+
+        QString sNewUsername = dlg.GetUsername();
+        QString sNewPassword = dlg.GetPassword();
+
+        if (!currUsername || !currPassword ||
+            (currUsername->text() == sNewUsername &&
+            currPassword->data(Qt::UserRole).toString() == sNewPassword))
+            return;
+
+        QString sApp(ui->cbApp->currentData(Qt::UserRole).toString());
+        m_managerData[sApp].remove(currUsername->text());
+		m_managerData[sApp].insert(sNewUsername, sNewPassword);
+
+		currUsername->setText(sNewUsername);
+		currPassword->setData(Qt::UserRole, sNewPassword);
+        OnChangeTableItemVisible(currPassword);
+
+        m_bChanges = true;
+    }
+
 }
 
 void Manager::OnDeleteAccount()
