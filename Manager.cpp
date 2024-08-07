@@ -123,8 +123,9 @@ void Manager::AddComboBoxItems(const QStringList& fileNames)
         QFileInfo fInfo(filePath);
         QString fName(fInfo.baseName());
         //disconnect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
-        ui->cbApp->addItem(fName, filePath);
-        qDebug() << ui->cbApp->count();
+        ui->cbApp->insertItem(0, fName, filePath);
+        ui->cbApp->setItemData(0, filePath, Qt::ToolTipRole);
+        
         ui->cbApp->setCurrentIndex(ui->cbApp->count() - 1);
         //connect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
 
