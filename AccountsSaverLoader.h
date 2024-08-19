@@ -23,5 +23,7 @@ private:
 private:
 	QString m_sPath;
 	QString m_sFileName;
+	QString m_sBufFileName;
+	QByteArrayView m_hashKey;
 };
 

@@ -2,9 +2,10 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QDir>
+#include "FileEncryptor.h"
 
 AccountsSaverLoader::AccountsSaverLoader(QString sPath)
-	: m_sPath(sPath), m_sFileName("accounts.json")
+	: m_sPath(sPath), m_sFileName("accounts.json"), m_sBufFileName("temp.json"), m_hashKey("yourpassword")
 {
 }
 
@@ -14,15 +15,22 @@ bool AccountsSaverLoader::SaveAccounts(const QMap<QString, QMap<QString, QString
 	QJsonObject jsonObject = ObjectToSave(deviceAppsData, otherAppsData);
 
 	QDir::setCurrent(m_sPath);
+	QFile jsonBufFile(m_sBufFileName);
 	QFile jsonFile(m_sFileName);
 
-	if (!jsonFile.open(QIODevice::WriteOnly))
+	if (!jsonBufFile.open(QIODevice::WriteOnly))
 	{
 		return false;
 	}
 
-	jsonFile.write(QJsonDocument(jsonObject).toJson(QJsonDocument::Indented));
-	jsonFile.close();
+	jsonBufFile.write(QJsonDocument(jsonObject).toJson(QJsonDocument::Indented));
+	jsonBufFile.close();
+
+	QByteArray key = QCryptographicHash::hash(m_hashKey, QCryptographicHash::Sha256);
+
+	FileEncryptor::encryptFile(jsonBufFile.fileName(), jsonFile.fileName(), key);
+
+	jsonBufFile.remove();
 
 	return true;
 }
@@ -31,17 +39,23 @@ void AccountsSaverLoader::LoadAccounts(QMap<QString, QMap<QString, QString>>& de
 {
 	QDir::setCurrent(m_sPath);
 	QFile jsonFile(m_sFileName);
+	QFile jsonBufFile(m_sBufFileName);
 
-	if (!jsonFile.open(QIODevice::ReadOnly))
+	QByteArray key = QCryptographicHash::hash(m_hashKey, QCryptographicHash::Sha256);
+	FileEncryptor::decryptFile(jsonFile.fileName(), jsonBufFile.fileName(), key);
+
+	if (!jsonBufFile.open(QIODevice::ReadOnly))
 	{
 		return;
 	}
 
-	QByteArray loadData = jsonFile.readAll();
+	QByteArray loadData = jsonBufFile.readAll();
 	QJsonDocument jsonDoc(QJsonDocument::fromJson(loadData));
 	QJsonObject jsonObject(jsonDoc.object());
 
 	LoadGroupsFromObject(jsonObject, deviceAppsData, otherAppsData);
+
+	jsonBufFile.remove();
 }
 
 QJsonObject AccountsSaverLoader::ConvertAccountsToJson(const QMap<QString, QMap<QString, QString>>& mAppsAccounts)
