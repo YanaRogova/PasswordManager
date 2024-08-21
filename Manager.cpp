@@ -33,7 +33,7 @@ Manager::Manager(QWidget *parent)
     connect(ui->pbAddApp, SIGNAL(clicked()), this, SLOT(OnAddApp()));
     connect(ui->tblAccounts, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(OnChangeTableItemVisible(QTableWidgetItem*)));
     connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
-    connect(ui->pbDeleteApp, SIGNAL(clicked()), this, SLOT(OnDeleteApp()));
+    connect(ui->pbDeleteApp, SIGNAL(clicked()), this, SLOT(OnRemoveApp()));
     connect(ui->rbDeviceApps, SIGNAL(clicked()), this, SLOT(OnChangeGroup()));
     connect(ui->rbOtherApps, SIGNAL(clicked()), this, SLOT(OnChangeGroup()));
 }
@@ -83,15 +83,15 @@ void Manager::CreateCustomMenu()
 
     QAction* copyAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditCopy), "Copy", this);
     QAction* editAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::MailMessageNew), "Edit", this);
-    QAction* deleteAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditDelete), "Delete", this);
+    QAction* removeAccount = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::EditDelete), "Remove", this);
 
     connect(copyAccount, SIGNAL(triggered()), this, SLOT(OnCopyAccount()));
     connect(editAccount, SIGNAL(triggered()), this, SLOT(OnEditAccount()));
-    connect(deleteAccount, SIGNAL(triggered()), this, SLOT(OnDeleteAccount()));
+    connect(removeAccount, SIGNAL(triggered()), this, SLOT(OnRemoveAccount()));
 
     m_customMenu->addAction(copyAccount);
     m_customMenu->addAction(editAccount);
-    m_customMenu->addAction(deleteAccount);
+    m_customMenu->addAction(removeAccount);
 }
 
 void Manager::DisableAccountAdding(bool bDisable)
@@ -105,42 +105,28 @@ void Manager::DisableAccountAdding(bool bDisable)
 
 void Manager::LoadAccounts()
 {
-    m_saverLoader.LoadAccounts(m_deviceAppsData, m_otherAppsData);
-    AddComboBoxItems(m_deviceAppsData.keys());
+    m_saverLoader.LoadAccounts(m_deviceApps, m_otherApps);
+    SetComboBoxItems(m_deviceApps);
     ui->cbApp->setCurrentIndex(-1);
 }
 
-void Manager::AddComboBoxItems(const QStringList& fileNames, bool bClear)
+void Manager::SetComboBoxItems(const AppsManager& appsManager)
 {
-    if (bClear)
-		ui->cbApp->clear();
+	ui->cbApp->clear();
 
-    for (auto filePath : fileNames)
+    for (auto sAppName : appsManager.GetAppNames())
     {
-        if (ui->cbApp->findData(filePath) != -1)
-        {
-            ui->cbApp->setCurrentIndex(ui->cbApp->findData(filePath));
-            QMessageBox::information(this, "The application has already been added",
-                "The selected application has already been added. You can add a new account for this application.");
-            continue;
-        }
-
-        QFileInfo fInfo(filePath);
-        QString fName(fInfo.baseName());
-        //disconnect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
-        ui->cbApp->insertItem(0, fName, filePath);
-        ui->cbApp->setItemData(0, filePath, Qt::ToolTipRole);
+        ui->cbApp->insertItem(0, sAppName, appsManager.GetAppDescription(sAppName));
+        ui->cbApp->setItemData(0, appsManager.GetAppDescription(sAppName), Qt::ToolTipRole);
         
-        ui->cbApp->setCurrentIndex(0);
-        //connect(ui->cbApp, SIGNAL(currentIndexChanged(int)), this, SLOT(OnChangeCurrentApp()));
-
-        //TODO: get app name from path, add to cb
     }
+       
+    ui->cbApp->setCurrentIndex(0);
 }
 
 void Manager::AddAppFromDevice()
 {
-     QString sFilter("Executable files (*.exe)");
+    QString sFilter("Executable files (*.exe)");
     QFileDialog fdlg(this, "Select application executable file", "/C:/", sFilter);
     fdlg.setFileMode(QFileDialog::ExistingFile);
 
@@ -148,11 +134,23 @@ void Manager::AddAppFromDevice()
         return;
 
     QStringList fileNames = fdlg.selectedFiles();
-    AddComboBoxItems(fileNames);
 
     for (auto filePath : fileNames)
-        m_deviceAppsData.insert(filePath, QMap<QString, QString>());
+    {
+        QFileInfo fInfo(filePath);
+        QString fName(fInfo.baseName());
 
+        if (!m_deviceApps.AddApp(fName, filePath))
+        {
+            QMessageBox::information(this, "The application has already been added",
+                "The selected application has already been added. You can add a new account for this application.");
+
+			ui->cbApp->setCurrentIndex(ui->cbApp->findText(fName));
+            return;
+        }
+    }
+
+    SetComboBoxItems(m_deviceApps);
     m_bChanges = true;
 }
 
@@ -189,36 +187,30 @@ void Manager::AddOtherApp()
     //ui->cbApp->setEditable(true);
 }
 
-void Manager::ChangeCurrentApp()
+void Manager::UpdateAccountsTable(QString sAppName)
 {
-
+    UpdateAccountsTableForGroup(sAppName, ui->rbDeviceApps->isChecked() ? m_deviceApps : m_otherApps);
 }
 
-void Manager::UpdateAccountsTable(QString sAppData)
+void Manager::UpdateAccountsTableForGroup(const QString& sAppName, const AppsManager& appsManager)
 {
-    UpdateAccountsTableForGroup(sAppData, ui->rbDeviceApps->isChecked() ? m_deviceAppsData : m_otherAppsData);
-}
+	QMap<QString, QString> appAccounts = appsManager.GetAppAccounts(sAppName);
 
-void Manager::UpdateAccountsTableForGroup(const QString& sAppData, const QMap<QString, QMap<QString, QString>>& groupApps)
-{
     ui->tblAccounts->clearContents();
-    ui->tblAccounts->setRowCount(groupApps.value(sAppData).keys().size());
-
-    if (!groupApps.contains(sAppData))
-        return;
+    ui->tblAccounts->setRowCount(appAccounts.size());
 
     QIcon icon(":/icons/hide_light.png");
 
     int nRowCount = 0;
-    for (auto sUser : groupApps.value(sAppData).keys())
+    for (auto sUser : appAccounts.keys())
     {
         QTableWidgetItem* twiUser = new QTableWidgetItem(sUser);
         ui->tblAccounts->setItem(nRowCount, COL_USER, twiUser);
 
-        QTableWidgetItem* twiPassword = new QTableWidgetItem(QString::QString(groupApps.value(sAppData).value(sUser).size(), '*'));
-        twiPassword->setData(Qt::UserRole, groupApps.value(sAppData).value(sUser));
-        ui->tblAccounts->setItem(nRowCount, COL_PASSWORD, twiPassword);
+        QTableWidgetItem* twiPassword = new QTableWidgetItem(QString::QString(appAccounts.value(sUser).size(), '*'));
+        twiPassword->setData(Qt::UserRole, appAccounts.value(sUser));
         twiPassword->setCheckState(Qt::Checked);
+        ui->tblAccounts->setItem(nRowCount, COL_PASSWORD, twiPassword);
 
         nRowCount++;
     }
@@ -245,7 +237,7 @@ void Manager::closeEvent(QCloseEvent* event)
     }
     else if (res == QMessageBox::Yes)
     {
-        bool bSaved = m_saverLoader.SaveAccounts(m_deviceAppsData, m_otherAppsData);
+        bool bSaved = m_saverLoader.SaveAccounts(m_deviceApps, m_otherApps);
 
         if (!bSaved)
         {
@@ -271,22 +263,8 @@ void Manager::closeEvent(QCloseEvent* event)
     }
 }
 
-void Manager::AddAccountForGroup(QMap<QString, QMap<QString, QString>>& groupApps)
+void Manager::AddAccountForGroup(AppsManager& appsManager)
 {
-    QString sAppData = ui->cbApp->currentData().toString();
-    if (!groupApps.contains(sAppData))
-        return;
-
-    if (groupApps.value(sAppData).contains((ui->leUser->text())))
-    {
-        QMessageBox msb(QMessageBox::Question, "The specified username already exists",
-            "The specified username already exists. Do you want to update the password for the specified username?",
-            QMessageBox::Yes | QMessageBox::No);
-
-        if (msb.exec() != QMessageBox::Yes)
-            return;
-    }
-
     if (ui->leUser->text().isEmpty() || ui->lePassword->text().isEmpty())
     {
         QMessageBox::information(this, "Some fields are not filled in",
@@ -294,22 +272,28 @@ void Manager::AddAccountForGroup(QMap<QString, QMap<QString, QString>>& groupApp
         return;
     }
 
-    groupApps[sAppData].insert(ui->leUser->text(), ui->lePassword->text());
-    UpdateAccountsTable(sAppData);
+    QString sAppName = ui->cbApp->currentText();
 
-    ui->leUser->clear();
-    ui->lePassword->clear();
-    m_bChanges = true;
+    if (appsManager.AddAppAccount(sAppName, ui->leUser->text(), ui->lePassword->text()))
+	{
+		UpdateAccountsTable(sAppName);
+
+		ui->leUser->clear();
+		ui->lePassword->clear();
+		ui->pbPasswordVisible->setChecked(false);
+		m_bChanges = true;
+	}    
 }
 
-void Manager::DeleteAppFromGroup(QMap<QString, QMap<QString, QString>>& groupApps)
+void Manager::RemoveAppFromGroup(AppsManager& appsManager)
 {
     int indCurrentApp = ui->cbApp->currentIndex();
+
     if (indCurrentApp != -1)
     {
         QMessageBox msb(QMessageBox::Question,
-            "Delete application",
-            "Are you sure you want to delete the application from the list and all accounts added to it?",
+            "Remove application",
+            "Are you sure you want to remove the application from the list and all accounts added to it?",
             QMessageBox::Yes | QMessageBox::No);
 
         if (msb.exec() != QMessageBox::Yes)
@@ -317,22 +301,24 @@ void Manager::DeleteAppFromGroup(QMap<QString, QMap<QString, QString>>& groupApp
             return;
         }
 
-        QString sApp = ui->cbApp->itemData(ui->cbApp->currentIndex(), Qt::UserRole).toString();
-        groupApps.remove(sApp);
+        QString sAppName = ui->cbApp->currentText();
+		appsManager.RemoveApp(sAppName);
+
         ui->cbApp->removeItem(indCurrentApp);
         ui->cbApp->setCurrentIndex(-1);
+
         UpdateAccountsTable();
         m_bChanges = true;
     }
 }
 
-void Manager::DeleteAccountFromGroup(QMap<QString, QMap<QString, QString>>& groupApps)
+void Manager::RemoveAccountFromGroup(AppsManager& appsManager)
 {
     if (!ui->tblAccounts->currentItem())
         return;
 
     QMessageBox msb(QMessageBox::Question,
-        "Delete account",
+        "Remove account",
         "Are you sure you want to remove the current account?",
         QMessageBox::Yes | QMessageBox::No);
 
@@ -342,14 +328,14 @@ void Manager::DeleteAccountFromGroup(QMap<QString, QMap<QString, QString>>& grou
     }
 
     QString sUserName(ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_USER)->text());
-    QString sApp(ui->cbApp->currentData(Qt::UserRole).toString());
 
-    groupApps[sApp].remove(sUserName);
+	appsManager.RemoveAppAccount(ui->cbApp->currentText(), sUserName);
+    
     ui->tblAccounts->removeRow(ui->tblAccounts->currentRow());
     m_bChanges = true;
 }
 
-void Manager::EditAccountInGroup(QMap<QString, QMap<QString, QString>>& groupApps)
+void Manager::EditAccountInGroup(AppsManager& appsManager)
 {
     if (!ui->tblAccounts->currentItem())
         return;
@@ -367,12 +353,12 @@ void Manager::EditAccountInGroup(QMap<QString, QMap<QString, QString>>& groupApp
 
         if (!currUsername || !currPassword ||
             (currUsername->text() == sNewUsername &&
-                currPassword->data(Qt::UserRole).toString() == sNewPassword))
+             currPassword->data(Qt::UserRole).toString() == sNewPassword))
             return;
 
-        QString sApp(ui->cbApp->currentData(Qt::UserRole).toString());
-        groupApps[sApp].remove(currUsername->text());
-        groupApps[sApp].insert(sNewUsername, sNewPassword);
+        QString sAppName(ui->cbApp->currentText());
+		appsManager.RemoveAppAccount(sAppName, currUsername->text());
+		appsManager.AddAppAccount(sAppName, sNewUsername, sNewPassword);
 
         currUsername->setText(sNewUsername);
         currPassword->setData(Qt::UserRole, sNewPassword);
@@ -392,15 +378,14 @@ void Manager::OnChangeCurrentApp()
 
     DisableAccountAdding(false);
 
-    QString sCurrentAppData = ui->cbApp->currentData().toString();
+    QString sCurrentAppName = ui->cbApp->currentText();
 
-    ChangeCurrentApp();
-    UpdateAccountsTable(sCurrentAppData);
+    UpdateAccountsTable(sCurrentAppName);
 }
 
 void Manager::OnAddAccaunt()
 {
-    AddAccountForGroup(ui->rbDeviceApps->isChecked() ? m_deviceAppsData : m_otherAppsData);
+    AddAccountForGroup(ui->rbDeviceApps->isChecked() ? m_deviceApps : m_otherApps);
 }
 
 void Manager::OnAddApp()
@@ -417,9 +402,9 @@ void Manager::OnAddApp()
     DisableAccountAdding(ui->cbApp->currentIndex() == -1);
 }
 
-void Manager::OnDeleteApp()
+void Manager::OnRemoveApp()
 {
-    DeleteAppFromGroup(ui->rbDeviceApps->isChecked() ? m_deviceAppsData : m_otherAppsData);
+    RemoveAppFromGroup(ui->rbDeviceApps->isChecked() ? m_deviceApps : m_otherApps);
 }
 
 void Manager::OnChangeTableItemVisible(QTableWidgetItem* ptwi)
@@ -464,12 +449,12 @@ void Manager::OnShowMenu(QPoint pos)
 
 void Manager::OnEditAccount()
 {
-    EditAccountInGroup(ui->rbDeviceApps->isChecked() ? m_deviceAppsData : m_otherAppsData);
+    EditAccountInGroup(ui->rbDeviceApps->isChecked() ? m_deviceApps : m_otherApps);
 }
 
-void Manager::OnDeleteAccount()
+void Manager::OnRemoveAccount()
 {
-	DeleteAccountFromGroup(ui->rbDeviceApps->isChecked() ? m_deviceAppsData : m_otherAppsData);
+    RemoveAccountFromGroup(ui->rbDeviceApps->isChecked() ? m_deviceApps : m_otherApps);
 }
 
 void Manager::OnCopyAccount()
@@ -488,7 +473,7 @@ void Manager::OnCopyAccount()
 
 void Manager::OnChangeGroup()
 {
-	AddComboBoxItems(ui->rbDeviceApps->isChecked() ? m_deviceAppsData.keys() : m_otherAppsData.keys(), true);
+    SetComboBoxItems(ui->rbDeviceApps->isChecked() ? m_deviceApps : m_otherApps);
 	ui->cbApp->setCurrentIndex(-1);
     UpdateAccountsTable();
 }

@@ -9,8 +9,8 @@ AccountsSaverLoader::AccountsSaverLoader(QString sPath)
 {
 }
 
-bool AccountsSaverLoader::SaveAccounts(const QMap<QString, QMap<QString, QString>>& deviceAppsData, 
-	const QMap<QString, QMap<QString, QString>>& otherAppsData)
+bool AccountsSaverLoader::SaveAccounts(const AppsManager& deviceAppsData,
+	const AppsManager& otherAppsData)
 {
 	QJsonObject jsonObject = ObjectToSave(deviceAppsData, otherAppsData);
 
@@ -35,7 +35,7 @@ bool AccountsSaverLoader::SaveAccounts(const QMap<QString, QMap<QString, QString
 	return true;
 }
 
-void AccountsSaverLoader::LoadAccounts(QMap<QString, QMap<QString, QString>>& deviceAppsData, QMap<QString, QMap<QString, QString>>& otherAppsData)
+void AccountsSaverLoader::LoadAccounts(AppsManager& deviceAppsData, AppsManager& otherAppsData)
 {
 	QDir::setCurrent(m_sPath);
 	QFile jsonFile(m_sFileName);
@@ -58,20 +58,23 @@ void AccountsSaverLoader::LoadAccounts(QMap<QString, QMap<QString, QString>>& de
 	jsonBufFile.remove();
 }
 
-QJsonObject AccountsSaverLoader::ConvertAccountsToJson(const QMap<QString, QMap<QString, QString>>& mAppsAccounts)
+QJsonObject AccountsSaverLoader::ConvertAccountsToJson(const AppsManager& mAppsAccounts)
 {
 	QJsonArray apps;
-	for (auto sApp : mAppsAccounts.keys())
+	for (auto sApp : mAppsAccounts.GetAppNames())
 	{
 		QJsonObject app;
 		app["app"] = sApp;
+		app["description"] = mAppsAccounts.GetAppDescription(sApp);
 
 		QJsonArray accounts;
-		for (auto sUser : mAppsAccounts.value(sApp).keys())
+		QMap<QString, QString> mapAccounts = mAppsAccounts.GetAppAccounts(sApp);
+
+		for (auto sUser : mapAccounts.keys())
 		{
 			QJsonObject account;
 			account["username"] = sUser;
-			account["password"] = mAppsAccounts.value(sApp).value(sUser);
+			account["password"] = mapAccounts.value(sUser);
 
 			accounts.append(account);
 		}
@@ -86,7 +89,7 @@ QJsonObject AccountsSaverLoader::ConvertAccountsToJson(const QMap<QString, QMap<
 	return jsonObject;
 }
 
-QJsonObject AccountsSaverLoader::ObjectToSave(const QMap<QString, QMap<QString, QString>>& deviceAppsData, const QMap<QString, QMap<QString, QString>>& otherAppsData)
+QJsonObject AccountsSaverLoader::ObjectToSave(const AppsManager& deviceAppsData, const AppsManager& otherAppsData)
 {
 	QJsonArray groups;
 
@@ -104,9 +107,9 @@ QJsonObject AccountsSaverLoader::ObjectToSave(const QMap<QString, QMap<QString, 
 	return jsonObject;
 }
 
-QMap<QString, QMap<QString, QString>> AccountsSaverLoader::ConvertAccountsFromJson(const QJsonObject& jsonObject)
+AppsManager AccountsSaverLoader::ConvertAccountsFromJson(const QJsonObject& jsonObject)
 {
-	QMap<QString, QMap<QString, QString>> mAppsAccounts;
+	AppsManager appsManager;
 	
 	QJsonArray jaApps = jsonObject.value("apps").toArray();
 	for (int i = 0; i < jaApps.count(); i++)
@@ -124,13 +127,16 @@ QMap<QString, QMap<QString, QString>> AccountsSaverLoader::ConvertAccountsFromJs
 			accounts.insert(account.value("username").toString(), account.value("password").toString());
 		}
 
-		mAppsAccounts.insert(app.value("app").toString(), accounts);
+		QString sApp = app.value("app").toString();
+		QString sDescription = app.value("description").toString();
+
+		appsManager.AddApp(sApp, sDescription, accounts);
 	}
 
-	return mAppsAccounts;
+	return appsManager;
 }
 
-void AccountsSaverLoader::LoadGroupsFromObject(const QJsonObject& jsonObject, QMap<QString, QMap<QString, QString>>& deviceAppsData, QMap<QString, QMap<QString, QString>>& otherAppsData)
+void AccountsSaverLoader::LoadGroupsFromObject(const QJsonObject& jsonObject, AppsManager& deviceAppsData, AppsManager& otherAppsData)
 {
 
 	QJsonArray jaGroups = jsonObject.value("groups").toArray();

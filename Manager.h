@@ -6,11 +6,8 @@
 #include <QCloseEvent>
 #include <QMenu>
 #include "AccountsSaverLoader.h"
+#include "AppsManager.h"
 
-class QComboBox;
-class QLineEdit;
-class QPushButton;
-class QListWidget;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,13 +27,13 @@ private slots:
     void OnChangeCurrentApp();
     void OnAddAccaunt();
     void OnAddApp();
-    void OnDeleteApp();
+    void OnRemoveApp();
     void OnChangeTableItemVisible(QTableWidgetItem* ptwi);
     void OnChangePasswordVisible();
 
     void OnShowMenu(QPoint pos);
     void OnEditAccount();
-    void OnDeleteAccount();
+    void OnRemoveAccount();
     void OnCopyAccount();
     void OnChangeGroup();
 
@@ -45,20 +42,19 @@ private:
     void CreateCustomMenu();
     void DisableAccountAdding(bool bDisable);
     void LoadAccounts();
-    void AddComboBoxItems(const QStringList& fileNames, bool bClear = false);
+    void SetComboBoxItems(const AppsManager& appsManager);
 
     void AddAppFromDevice();
     void AddOtherApp();
-    void ChangeCurrentApp();
 
-    void UpdateAccountsTable(QString sAppData = QString());
-	void UpdateAccountsTableForGroup(const QString& sAppData, const QMap<QString, QMap<QString, QString>>& groupApps);
+    void UpdateAccountsTable(QString sAppName = QString());
+	void UpdateAccountsTableForGroup(const QString& sAppName, const AppsManager& appsManager);
     void closeEvent(QCloseEvent* event);
 
-    void AddAccountForGroup(QMap<QString, QMap<QString, QString>>& groupApps);
-    void DeleteAppFromGroup(QMap<QString, QMap<QString, QString>>& groupApps);
-    void DeleteAccountFromGroup(QMap<QString, QMap<QString, QString>>& groupApps);
-	void EditAccountInGroup(QMap<QString, QMap<QString, QString>>& groupApps);
+    void AddAccountForGroup(AppsManager& appsManager);
+    void RemoveAppFromGroup(AppsManager& appsManager);
+    void RemoveAccountFromGroup(AppsManager& appsManager);
+	void EditAccountInGroup(AppsManager& appsManager);
 
 
 private:
@@ -66,8 +62,11 @@ private:
     //QLineEdit* m_leOtherAppName;
 
     // < app path, < user, password > >
-    QMap<QString, QMap<QString, QString>> m_deviceAppsData;
-    QMap<QString, QMap<QString, QString>> m_otherAppsData;
+	AppsManager m_deviceApps;
+	AppsManager m_otherApps;
+
+    //QMap<QString, QMap<QString, QString>> m_deviceAppsData;
+    //QMap<QString, QMap<QString, QString>> m_otherAppsData;
     AccountsSaverLoader m_saverLoader;
     bool m_bChanges;
 
@@ -77,7 +76,6 @@ private:
 enum TableColumns
 {
     COL_USER = 0,
-    COL_PASSWORD,
-    COL_VISIBLE
+    COL_PASSWORD
 };
 #endif // MANAGER_H

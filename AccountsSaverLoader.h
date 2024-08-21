@@ -2,23 +2,22 @@
 
 #include <QString>
 #include <QJsonObject>
+#include "AppsManager.h"
 
 class AccountsSaverLoader
 {
 public:
 	AccountsSaverLoader(QString sPath);
 
-	bool SaveAccounts(const QMap<QString, QMap<QString, QString>>& deviceAppsData, 
-		const QMap<QString, QMap<QString, QString>>& otherAppsData);
-	void LoadAccounts(QMap<QString, QMap<QString, QString>>& deviceAppsData, QMap<QString, QMap<QString, QString>>& otherAppsData);
+	bool SaveAccounts(const AppsManager& deviceAppsData, const AppsManager& otherAppsData);
+	void LoadAccounts(AppsManager& deviceAppsData, AppsManager& otherAppsData);
 
 private:
-	QJsonObject ConvertAccountsToJson(const QMap<QString, QMap<QString, QString>>& mAppsAccounts);
-	QJsonObject ObjectToSave(const QMap<QString, QMap<QString, QString>>& deviceAppsData,
-		const QMap<QString, QMap<QString, QString>>& otherAppsData);
-	QMap<QString, QMap<QString, QString>> ConvertAccountsFromJson(const QJsonObject& jsonObject);
-	void LoadGroupsFromObject(const QJsonObject& jsonObject, QMap<QString, QMap<QString, QString>>& deviceAppsData,
-		QMap<QString, QMap<QString, QString>>& otherAppsData);
+	QJsonObject ConvertAccountsToJson(const AppsManager& mAppsAccounts);
+	QJsonObject ObjectToSave(const AppsManager& deviceAppsData,	const AppsManager& otherAppsData);
+	AppsManager ConvertAccountsFromJson(const QJsonObject& jsonObject);
+	void LoadGroupsFromObject(const QJsonObject& jsonObject, AppsManager& deviceAppsData,
+		AppsManager& otherAppsData);
 
 private:
 	QString m_sPath;
