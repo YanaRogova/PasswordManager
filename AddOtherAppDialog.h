@@ -21,8 +21,6 @@ private slots:
 	void OnOk();
 
 private:
-
-private:
 	Ui::AddOtherAppDialog* ui;
 };
 

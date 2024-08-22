@@ -3,11 +3,12 @@
 
 bool AppsManager::AddApp(QString sAppName, QString sDescription, QMap<QString, QString> mapAccounts)
 {
-	if (m_mapApps.contains(sAppName)) 
+	if (m_mapApps.contains(sAppName)) // app has already been added
 	{
 		return false;
 	}
 	
+	// Create a new AppInfo object and add it to the map
 	AppInfo appInfo;
 	appInfo.sDescription = sDescription;
 	appInfo.mapAccounts = mapAccounts;
@@ -24,10 +25,10 @@ void AppsManager::RemoveApp(QString sAppName)
 
 bool AppsManager::AddAppAccount(QString sAppName, QString sUsername, QString sPassword)
 {
-	if (!m_mapApps.contains(sAppName))
+	if (!m_mapApps.contains(sAppName)) // app does not exist
 		return false;
 
-	if (m_mapApps[sAppName].mapAccounts.contains(sUsername))
+	if (m_mapApps[sAppName].mapAccounts.contains(sUsername)) // username already exists for the app
 	{
 		QMessageBox msb(QMessageBox::Question, "The specified username already exists",
 			"The specified username already exists. Do you want to update the password for the specified username?",
@@ -37,7 +38,7 @@ bool AppsManager::AddAppAccount(QString sAppName, QString sUsername, QString sPa
 			return false;
 	}
 
-	m_mapApps[sAppName].mapAccounts.insert(sUsername, sPassword);
+	m_mapApps[sAppName].mapAccounts.insert(sUsername, sPassword); // add or update the account
 	return true;
 }
 

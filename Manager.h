@@ -23,32 +23,25 @@ public:
     Manager(QWidget *parent = nullptr);
     ~Manager();
 
-private slots:
-    void OnChangeCurrentApp();
-    void OnAddAccaunt();
-    void OnAddApp();
-    void OnRemoveApp();
-    void OnChangeTableItemVisible(QTableWidgetItem* ptwi);
-    void OnChangePasswordVisible();
-
-    void OnShowMenu(QPoint pos);
-    void OnEditAccount();
-    void OnRemoveAccount();
-    void OnCopyAccount();
-    void OnChangeGroup();
 
 private:
+	// set parametr for ui elements
     void SetManagerUi();
     void CreateCustomMenu();
+
+    // make enable/disable ui elements that used for adding new accounts
     void DisableAccountAdding(bool bDisable);
     void LoadAccounts();
+    //set combobox items for the group of applications
     void SetComboBoxItems(const AppsManager& appsManager);
 
     void AddAppFromDevice();
     void AddOtherApp();
 
+	// update accounts table based on current application
     void UpdateAccountsTable(QString sAppName = QString());
 	void UpdateAccountsTableForGroup(const QString& sAppName, const AppsManager& appsManager);
+    
     void closeEvent(QCloseEvent* event);
 
     void AddAccountForGroup(AppsManager& appsManager);
@@ -57,16 +50,32 @@ private:
 	void EditAccountInGroup(AppsManager& appsManager);
 
 
+private slots:
+    // handle changes in combobox current item
+    void OnChangeCurrentApp();
+
+    void OnAddAccaunt();
+    void OnAddApp();
+    void OnRemoveApp();
+
+    // handle password visibilty in the table
+    void OnChangeTableItemVisible(QTableWidgetItem* ptwi);
+	// handle password visibilty in the line edit for adding new account
+    void OnChangePasswordVisible();
+
+    void OnShowMenu(QPoint pos);
+
+    void OnEditAccount();
+    void OnRemoveAccount();
+    void OnCopyAccount();
+    void OnChangeGroup();
+
 private:
     Ui::Manager *ui;
-    //QLineEdit* m_leOtherAppName;
 
-    // < app path, < user, password > >
 	AppsManager m_deviceApps;
 	AppsManager m_otherApps;
 
-    //QMap<QString, QMap<QString, QString>> m_deviceAppsData;
-    //QMap<QString, QMap<QString, QString>> m_otherAppsData;
     AccountsSaverLoader m_saverLoader;
     bool m_bChanges;
 

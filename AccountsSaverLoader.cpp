@@ -12,24 +12,29 @@ AccountsSaverLoader::AccountsSaverLoader(QString sPath)
 bool AccountsSaverLoader::SaveAccounts(const AppsManager& deviceAppsData,
 	const AppsManager& otherAppsData)
 {
+	// create json object to save
 	QJsonObject jsonObject = ObjectToSave(deviceAppsData, otherAppsData);
 
 	QDir::setCurrent(m_sPath);
 	QFile jsonBufFile(m_sBufFileName);
 	QFile jsonFile(m_sFileName);
 
-	if (!jsonBufFile.open(QIODevice::WriteOnly))
+	if (!jsonBufFile.open(QIODevice::WriteOnly)) // can't open file
 	{
 		return false;
 	}
 
+	// write json to buffer file
 	jsonBufFile.write(QJsonDocument(jsonObject).toJson(QJsonDocument::Indented));
 	jsonBufFile.close();
 
+	// create encrypted key
 	QByteArray key = QCryptographicHash::hash(m_hashKey, QCryptographicHash::Sha256);
 
+	// encrypt buffer file to final file
 	FileEncryptor::encryptFile(jsonBufFile.fileName(), jsonFile.fileName(), key);
 
+	// remove buffer file
 	jsonBufFile.remove();
 
 	return true;
@@ -41,21 +46,24 @@ void AccountsSaverLoader::LoadAccounts(AppsManager& deviceAppsData, AppsManager&
 	QFile jsonFile(m_sFileName);
 	QFile jsonBufFile(m_sBufFileName);
 
+	// decrypt file to buffer file
 	QByteArray key = QCryptographicHash::hash(m_hashKey, QCryptographicHash::Sha256);
 	FileEncryptor::decryptFile(jsonFile.fileName(), jsonBufFile.fileName(), key);
 
-	if (!jsonBufFile.open(QIODevice::ReadOnly))
+	if (!jsonBufFile.open(QIODevice::ReadOnly)) // can't open file
 	{
 		return;
 	}
 
+	// read json from buffer file and convert to object
 	QByteArray loadData = jsonBufFile.readAll();
 	QJsonDocument jsonDoc(QJsonDocument::fromJson(loadData));
 	QJsonObject jsonObject(jsonDoc.object());
 
+	// load accounts from object for different groups of apps
 	LoadGroupsFromObject(jsonObject, deviceAppsData, otherAppsData);
 
-	jsonBufFile.remove();
+	jsonBufFile.remove(); // remove buffer file
 }
 
 QJsonObject AccountsSaverLoader::ConvertAccountsToJson(const AppsManager& mAppsAccounts)
@@ -93,14 +101,17 @@ QJsonObject AccountsSaverLoader::ObjectToSave(const AppsManager& deviceAppsData,
 {
 	QJsonArray groups;
 
+	// convert device apps to json object
 	QJsonObject groupDevice = ConvertAccountsToJson(deviceAppsData);
 	groupDevice["group"] = "device";
 	groups.append(groupDevice);
 
+	// convert other apps to json object
 	QJsonObject groupOther = ConvertAccountsToJson(otherAppsData);
 	groupOther["group"] = "other";
 	groups.append(groupOther);
 
+	// create finally json object to save
 	QJsonObject jsonObject;
 	jsonObject["groups"] = groups;
 

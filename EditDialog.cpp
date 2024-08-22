@@ -7,15 +7,12 @@ EditDialog::EditDialog(QString sUsername, QString sPassword, QWidget* parent)
 	ui = new Ui::EditDialog();
 	ui->setupUi(this);
 
+	// set parameters of ui elements
 	ui->lePassword->setText(sPassword);	
 	ui->leUsername->setText(sUsername);	
-	
-	connect(ui->pbOK, SIGNAL(clicked()), this, SLOT(accept()));
-	connect(ui->pbCancel, SIGNAL(clicked()), this, SLOT(reject()));
-    connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
-
     ui->pbOK->setFocus();
 
+	// set icons for password visibility button
     if (this->palette().color(QPalette::Window).lightness() < 128)
     {
         m_iconHide = QIcon(":/icons/hide_light.png");
@@ -27,7 +24,12 @@ EditDialog::EditDialog(QString sUsername, QString sPassword, QWidget* parent)
         m_iconShow = QIcon(":/icons/show_dark.png");
     }
 
-    OnChangePasswordVisible();
+    OnChangePasswordVisible(); // set echo mode for the password
+	
+    // connect signals
+	connect(ui->pbOK, SIGNAL(clicked()), this, SLOT(accept()));
+	connect(ui->pbCancel, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
 }
 
 EditDialog::~EditDialog()
@@ -47,12 +49,12 @@ QString EditDialog::GetPassword() const
 
 void EditDialog::OnChangePasswordVisible()
 {
-    if (ui->lePassword->echoMode() == QLineEdit::Password)
+	if (ui->lePassword->echoMode() == QLineEdit::Password) // show password if it was hidden
     {
         ui->pbPasswordVisible->setIcon(m_iconShow);
         ui->lePassword->setEchoMode(QLineEdit::Normal);
     }
-    else
+	else // hide password if it was shown
     {
         ui->pbPasswordVisible->setIcon(m_iconHide);
         ui->lePassword->setEchoMode(QLineEdit::Password);
