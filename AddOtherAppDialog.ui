@@ -14,25 +14,8 @@
    <string>Add application</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Application</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
-    <widget class="QLineEdit" name="lineEdit"/>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Description</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLineEdit" name="lineEdit_2"/>
+    <widget class="QLineEdit" name="leApp"/>
    </item>
    <item row="4" column="0">
     <layout class="QHBoxLayout" name="horizontalSpacer_2">
@@ -71,26 +54,27 @@
      </item>
     </layout>
    </item>
+   <item row="3" column="0">
+    <widget class="QLineEdit" name="leDescription"/>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="lApp">
+     <property name="text">
+      <string>Application</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="lDescription">
+     <property name="text">
+      <string>Description</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>pbOK</sender>
-   <signal>clicked()</signal>
-   <receiver>AddOtherAppDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>278</x>
-     <y>253</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>96</x>
-     <y>254</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>pbCancel</sender>
    <signal>clicked()</signal>

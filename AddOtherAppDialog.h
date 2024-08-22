@@ -14,6 +14,14 @@ public:
 	AddOtherAppDialog(QWidget* parent = Q_NULLPTR);
 	~AddOtherAppDialog();
 
+	QString GetAppName() const;
+	QString GetAppDescription() const;
+
+private slots:
+	void OnOk();
+
+private:
+
 private:
 	Ui::AddOtherAppDialog* ui;
 };

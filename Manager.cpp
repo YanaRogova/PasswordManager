@@ -146,7 +146,7 @@ void Manager::AddAppFromDevice()
                 "The selected application has already been added. You can add a new account for this application.");
 
 			ui->cbApp->setCurrentIndex(ui->cbApp->findText(fName));
-            return;
+            break;
         }
     }
 
@@ -160,26 +160,19 @@ void Manager::AddOtherApp()
 
     if (dlg.exec() == QDialog::Accepted)
     {
-        /*QTableWidgetItem* currUsername = ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_USER);
-        QTableWidgetItem* currPassword = ui->tblAccounts->item(ui->tblAccounts->currentRow(), COL_PASSWORD);
+		QString sAppName = dlg.GetAppName();
+		QString sAppDescription = dlg.GetAppDescription();
 
-        QString sNewUsername = dlg.GetUsername();
-        QString sNewPassword = dlg.GetPassword();
+        if (!m_otherApps.AddApp(sAppName, sAppDescription))
+        {
+            QMessageBox::information(this, "The application has already been added",
+                "The selected application has already been added. You can add a new account for this application.");
 
-        if (!currUsername || !currPassword ||
-            (currUsername->text() == sNewUsername &&
-                currPassword->data(Qt::UserRole).toString() == sNewPassword))
-            return;
+            ui->cbApp->setCurrentIndex(ui->cbApp->findText(sAppName));
+        }
 
-        QString sApp(ui->cbApp->currentData(Qt::UserRole).toString());
-        groupApps[sApp].remove(currUsername->text());
-        groupApps[sApp].insert(sNewUsername, sNewPassword);
-
-        currUsername->setText(sNewUsername);
-        currPassword->setData(Qt::UserRole, sNewPassword);
-        OnChangeTableItemVisible(currPassword);
-
-        m_bChanges = true;*/
+        SetComboBoxItems(m_otherApps);
+        m_bChanges = true;        
     }
     //m_leOtherAppName->show();
     //ui->cbApp->hide();
