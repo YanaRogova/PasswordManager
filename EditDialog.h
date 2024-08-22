@@ -22,5 +22,8 @@ private slots:
 
 private:
 	Ui::EditDialog* ui;
+
+	QIcon m_iconHide;
+	QIcon m_iconShow;
 };
 

@@ -8,7 +8,6 @@ EditDialog::EditDialog(QString sUsername, QString sPassword, QWidget* parent)
 	ui->setupUi(this);
 
 	ui->lePassword->setText(sPassword);	
-	ui->lePassword->setEchoMode(QLineEdit::Password);	
 	ui->leUsername->setText(sUsername);	
 	
 	connect(ui->pbOK, SIGNAL(clicked()), this, SLOT(accept()));
@@ -16,6 +15,19 @@ EditDialog::EditDialog(QString sUsername, QString sPassword, QWidget* parent)
     connect(ui->pbPasswordVisible, SIGNAL(clicked()), this, SLOT(OnChangePasswordVisible()));
 
     ui->pbOK->setFocus();
+
+    if (this->palette().color(QPalette::Window).lightness() < 128)
+    {
+        m_iconHide = QIcon(":/icons/hide_light.png");
+        m_iconShow = QIcon(":/icons/show_light.png");
+    }
+    else
+    {
+        m_iconHide = QIcon(":/icons/hide_dark.png");
+        m_iconShow = QIcon(":/icons/show_dark.png");
+    }
+
+    OnChangePasswordVisible();
 }
 
 EditDialog::~EditDialog()
@@ -35,17 +47,14 @@ QString EditDialog::GetPassword() const
 
 void EditDialog::OnChangePasswordVisible()
 {
-    QString sPathIcon(":/icons/show_light.png");
-
     if (ui->lePassword->echoMode() == QLineEdit::Password)
     {
+        ui->pbPasswordVisible->setIcon(m_iconShow);
         ui->lePassword->setEchoMode(QLineEdit::Normal);
     }
     else
     {
-        sPathIcon = ":/icons/hide_light.png";
+        ui->pbPasswordVisible->setIcon(m_iconHide);
         ui->lePassword->setEchoMode(QLineEdit::Password);
-    }
-
-    ui->pbPasswordVisible->setIcon(QIcon(sPathIcon));
+    }    
 }

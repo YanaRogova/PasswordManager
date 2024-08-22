@@ -18,6 +18,17 @@ Manager::Manager(QWidget *parent)
     ui->setupUi(centralWidget);
     setCentralWidget(centralWidget);
 
+    if (this->palette().color(QPalette::Window).lightness() < 128)
+    {
+        m_iconHide = QIcon(":/icons/hide_light.png");
+        m_iconShow = QIcon(":/icons/show_light.png");
+    }
+    else
+    {
+        m_iconHide = QIcon(":/icons/hide_dark.png");
+        m_iconShow = QIcon(":/icons/show_dark.png");
+    }
+
    // m_leOtherAppName = new QLineEdit(centralWidget);
    //auto grid = qobject_cast<QGridLayout*>(centralWidget->layout());
    // grid->addWidget(m_leOtherAppName, 4, 0, 1, 5);
@@ -59,7 +70,7 @@ void Manager::SetManagerUi()
     ui->leUser->setPlaceholderText("Username");
     ui->lePassword->setPlaceholderText("Password");
     ui->lePassword->setEchoMode(QLineEdit::Password);
-    ui->pbPasswordVisible->setIcon(QIcon(":/icons/hide_light.png"));
+    ui->pbPasswordVisible->setIcon(m_iconHide);
     // QFont font = ui->leUser->font();
     // font.
     // ui->leUser->setText("User");
@@ -174,10 +185,6 @@ void Manager::AddOtherApp()
         SetComboBoxItems(m_otherApps);
         m_bChanges = true;        
     }
-    //m_leOtherAppName->show();
-    //ui->cbApp->hide();
-
-    //ui->cbApp->setEditable(true);
 }
 
 void Manager::UpdateAccountsTable(QString sAppName)
@@ -191,8 +198,6 @@ void Manager::UpdateAccountsTableForGroup(const QString& sAppName, const AppsMan
 
     ui->tblAccounts->clearContents();
     ui->tblAccounts->setRowCount(appAccounts.size());
-
-    QIcon icon(":/icons/hide_light.png");
 
     int nRowCount = 0;
     for (auto sUser : appAccounts.keys())
@@ -417,19 +422,16 @@ void Manager::OnChangeTableItemVisible(QTableWidgetItem* ptwi)
 
 void Manager::OnChangePasswordVisible()
 {
-    QString sPathIcon(":/icons/show_light.png");
-
     if (ui->lePassword->echoMode() == QLineEdit::Password)
     {
+        ui->pbPasswordVisible->setIcon(m_iconShow);
         ui->lePassword->setEchoMode(QLineEdit::Normal);
     }
     else
     {
-        sPathIcon = ":/icons/hide_light.png";
+        ui->pbPasswordVisible->setIcon(m_iconHide);
         ui->lePassword->setEchoMode(QLineEdit::Password);
     }
-
-    ui->pbPasswordVisible->setIcon(QIcon(sPathIcon));
 }
 
 void Manager::OnShowMenu(QPoint pos)

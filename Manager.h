@@ -71,6 +71,9 @@ private:
     bool m_bChanges;
 
     QMenu* m_customMenu;
+
+    QIcon m_iconHide;
+	QIcon m_iconShow;
 };
 
 enum TableColumns
